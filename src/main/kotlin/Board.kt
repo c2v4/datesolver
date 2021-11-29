@@ -1,3 +1,5 @@
+import java.util.stream.Stream
+
 class Board {
 
     //true value means that the field is occupied
@@ -37,9 +39,9 @@ class Board {
     fun nextSteps(
         availablePieces: Map<Piece, Set<Piece>>,
         solutionSoFar: List<Pair<Piece, Point2D>>
-    ): Sequence<Result> {
+    ): Stream<Result> {
         val startingPoint = getStartingPoint()
-        return availablePieces.values.flatten().toSet().asSequence()
+        return availablePieces.values.flatten().toSet().parallelStream()
             .filter { it.isValidStart(startingPoint, maxYPosition) }
             .filter { it.blockPostions.map { point -> point + startingPoint }.none { (x, y) -> isOccupied(x, y) } }
             .map {
@@ -91,7 +93,8 @@ class Board {
                     }
                 }
             }
-        }.firstOrNull { it.board.isSolved() }?.let { it.solution } ?: throw IllegalStateException("No solution found")
+        }.filter { it.board.isSolved() }.findFirst().orElseGet { null }?.let { it.solution }
+            ?: throw IllegalStateException("No solution found")
     }
 
 }
